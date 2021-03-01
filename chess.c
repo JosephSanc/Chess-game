@@ -8,17 +8,21 @@ int translateRowToRealNum(int);
 void printWelcomeMessage();
 void printChessBoard();
 int isPawn(int, char);
-int usePawn(int, char, int, char);
+int usePawn(int, char, int, char, int);
+int readInt();
+int promotePawnFirstPlayer();
+int promotePawnSecondPlayer();
 int isKnight(int, char);
-int useKnight(int, char, int, char);
+int useKnight(int, char, int, char, int);
 int isRook(int, char);
-int useRook(int, char, int, char);
+int useRook(int, char, int, char, int);
 int isBishop(int, char);
-int useBishop(int, char, int, char);
+int useBishop(int, char, int, char, int);
 int isQueen(int, char);
-int useQueen(int, char, int, char);
+int useQueen(int, char, int, char, int);
 int isKing(int, char);
-int useKing(int, char, int, char);
+int useKing(int, char, int, char, int);
+void kingIsInCheck();
 void userInteraction();
 
 //Global Variables
@@ -104,6 +108,7 @@ int translateRowToRealNum(int num){
 	return 8 - num;
 }
 
+//Handles the user interface
 void userInteraction(){
 	//Player one values
 	int playerOneCurrentRow;
@@ -127,6 +132,7 @@ void userInteraction(){
 	printWelcomeMessage();
 	printChessBoard();
 
+	//Runs as long as the user doesn't enter "quit"
 	while(command[0] != 'q' && command[1] != 'u' && command[2] != 'i' && command[3] != 't'){
 		//Player One Goes
 		playerOne:
@@ -144,60 +150,65 @@ void userInteraction(){
 		playerOneNewCol = command[11];
 
 
-		if(command[0] == 'q' && command[1] == 'u' && command[2] == 'i' && command[3] == 't'){
+		if(command[0] == 'q' && command[1] == 'u' && command[2] == 'i' && command[3] == 't'){ //Breaks the loop if a player enters "quit"
 			printf("Player Two wins!\n");
 			return;
 		} else if ((command[0] == 'm' && command[1] == 'v') || ((command[0] == 'c' && command[1] == 'p'))){
-			if(isPawn(playerOneCurrentRow, playerOneCurrentCol)){
-				if(usePawn(playerOneCurrentRow, playerOneCurrentCol, playerOneNewRow, playerOneNewCol) == -1){
+			if(isPawn(playerOneCurrentRow, playerOneCurrentCol)){ //Case for pawn
+				if(usePawn(playerOneCurrentRow, playerOneCurrentCol, playerOneNewRow, playerOneNewCol, 1) == 1){
+					;
+				} else {
+					printf("\n**That is an illegal move, please try again**\n");
+					goto playerOne;
+				}
+			} else if(isKnight(playerOneCurrentRow, playerOneCurrentCol)){ //Case for knight
+				if(useKnight(playerOneCurrentRow, playerOneCurrentCol, playerOneNewRow, playerOneNewCol, 1) == 1){
+					;
+				} else {
 					printf("\n**That is an illegal move, please try again**\n");
 					goto playerOne;
 				} 
-				usePawn(playerOneCurrentRow, playerOneCurrentCol, playerOneNewRow, playerOneNewCol);
-			} else if(isKnight(playerOneCurrentRow, playerOneCurrentCol)){
-				if(useKnight(playerOneCurrentRow, playerOneCurrentCol, playerOneNewRow, playerOneNewCol) == 1){
-					;
-				} else {
-					printf("\n**That is an illegal move, please try again**\n");
-					goto playerOne;
-				} 
-			} else if(isRook(playerOneCurrentRow, playerOneCurrentCol)){
-				if(useRook(playerOneCurrentRow, playerOneCurrentCol, playerOneNewRow, playerOneNewCol) == 1){
+			} else if(isRook(playerOneCurrentRow, playerOneCurrentCol)){ //Case for rook
+				if(useRook(playerOneCurrentRow, playerOneCurrentCol, playerOneNewRow, playerOneNewCol, 1) == 1){
 					;
 				} else {
 					printf("\n**That is an illegal move, please try again**\n");
 					goto playerOne;
 				}
-			} else if(isBishop(playerOneCurrentRow, playerOneCurrentCol)){
-				if(useBishop(playerOneCurrentRow, playerOneCurrentCol, playerOneNewRow, playerOneNewCol) == 1){
+			} else if(isBishop(playerOneCurrentRow, playerOneCurrentCol)){ //Case for bishop
+				if(useBishop(playerOneCurrentRow, playerOneCurrentCol, playerOneNewRow, playerOneNewCol, 1) == 1){
 					;
 				} else {
 					printf("\n**That is an illegal move, please try again**\n");
 					goto playerOne;
 				}
-			} else if(isQueen(playerOneCurrentRow, playerOneCurrentCol)){
-				if(useQueen(playerOneCurrentRow, playerOneCurrentCol, playerOneNewRow, playerOneNewCol) == 1){
+			} else if(isQueen(playerOneCurrentRow, playerOneCurrentCol)){ //Case for queen
+				if(useQueen(playerOneCurrentRow, playerOneCurrentCol, playerOneNewRow, playerOneNewCol, 1) == 1){
 					;
 				} else {
 					printf("\n**That is an illegal move, please try again**\n");
 					goto playerOne;
 				}
-			} else if(isKing(playerOneCurrentRow, playerOneCurrentCol)){
-				if(useKing(playerOneCurrentRow, playerOneCurrentCol, playerOneNewRow, playerOneNewCol) == 1){
+			} else if(isKing(playerOneCurrentRow, playerOneCurrentCol)){ //Case for king
+				if(useKing(playerOneCurrentRow, playerOneCurrentCol, playerOneNewRow, playerOneNewCol, 1) == 1){
 					;
 				} else {
 					printf("\n**That is an illegal move, please try again**\n");
 					goto playerOne;
 				}
+			} else { //Anything else if an illegal move
+				printf("\n**That is an illegal move, please try again**\n");
+				goto playerOne;
 			}
-			playerOneFirstTurnWasPlayed = 1;
-		} else if(command[0] == 's' && command[1] == 'h' && command[2] == 'o' && command[3] == 'w'){
+			playerOneFirstTurnWasPlayed = 1; //Makes sure playerOne doesn't move up two spaces again with pawn after first move
+		} else if(command[0] == 's' && command[1] == 'h' && command[2] == 'o' && command[3] == 'w'){ //'show' command for showing chessboard
 			printChessBoard();
 			goto playerOne;
 		} else {
 			printf("Invalid Entry, try again\n");
 			goto playerOne;
 		}
+		kingIsInCheck();
 
 		//Player Two Goes
 		playerTwo:
@@ -214,54 +225,58 @@ void userInteraction(){
 		playerTwoNewRow = atoi(tempPlayerTwoNewRow);
 		playerTwoNewCol = command[11];
 
-
-		if(command[0] == 'q' && command[1] == 'u' && command[2] == 'i' && command[3] == 't'){
+		if(command[0] == 'q' && command[1] == 'u' && command[2] == 'i' && command[3] == 't'){ //breaks the loop if playerTwo enters "quit"
 			printf("Player One wins!\n");
 			return;
 		} else if((command[0] == 'm' && command[1] == 'v') || ((command[0] == 'c' && command[1] == 'p'))){
-			if(isPawn(playerTwoCurrentRow, playerTwoCurrentCol)){
-				if(usePawn(playerTwoCurrentRow, playerTwoCurrentCol, playerTwoNewRow, playerTwoNewCol) == -1){
-					printf("\n**That is an illegal move, please try again**\n");
-					goto playerTwo;
-				} 
-				usePawn(playerTwoCurrentRow, playerTwoCurrentCol, playerTwoNewRow, playerTwoNewCol);
-			} else if(isKnight(playerTwoCurrentRow, playerTwoCurrentCol)){
-				if(useKnight(playerTwoCurrentRow, playerTwoCurrentCol, playerTwoNewRow, playerTwoNewCol) == 1){
+			if(isPawn(playerTwoCurrentRow, playerTwoCurrentCol)){ //Case for Pawn
+				if(usePawn(playerTwoCurrentRow, playerTwoCurrentCol, playerTwoNewRow, playerTwoNewCol, -1) == 1){
 					;
 				} else {
 					printf("\n**That is an illegal move, please try again**\n");
 					goto playerTwo;
 				}
-			}  else if(isRook(playerTwoCurrentRow, playerTwoCurrentCol)){
-				if(useRook(playerTwoCurrentRow, playerTwoCurrentCol, playerTwoNewRow, playerTwoNewCol) == 1){
+			} else if(isKnight(playerTwoCurrentRow, playerTwoCurrentCol)){ //Case for knight
+				if(useKnight(playerTwoCurrentRow, playerTwoCurrentCol, playerTwoNewRow, playerTwoNewCol, -1) == 1){
 					;
 				} else {
 					printf("\n**That is an illegal move, please try again**\n");
 					goto playerTwo;
 				}
-			} else if(isBishop(playerTwoCurrentRow, playerTwoCurrentCol)){
-				if(useBishop(playerTwoCurrentRow, playerTwoCurrentCol, playerTwoNewRow, playerTwoNewCol) == 1){
+			}  else if(isRook(playerTwoCurrentRow, playerTwoCurrentCol)){ //Case for rook
+				if(useRook(playerTwoCurrentRow, playerTwoCurrentCol, playerTwoNewRow, playerTwoNewCol, -1) == 1){
 					;
 				} else {
 					printf("\n**That is an illegal move, please try again**\n");
 					goto playerTwo;
 				}
-			} else if(isQueen(playerTwoCurrentRow, playerTwoCurrentCol)){
-				if(useQueen(playerTwoCurrentRow, playerTwoCurrentCol, playerTwoNewRow, playerTwoNewCol) == 1){
+			} else if(isBishop(playerTwoCurrentRow, playerTwoCurrentCol)){ //Case for bishop
+				if(useBishop(playerTwoCurrentRow, playerTwoCurrentCol, playerTwoNewRow, playerTwoNewCol, -1) == 1){
 					;
 				} else {
 					printf("\n**That is an illegal move, please try again**\n");
 					goto playerTwo;
 				}
-			} else if(isKing(playerTwoCurrentRow, playerTwoCurrentCol)){
-				if(useKing(playerTwoCurrentRow, playerTwoCurrentCol, playerTwoNewRow, playerTwoNewCol) == 1){
+			} else if(isQueen(playerTwoCurrentRow, playerTwoCurrentCol)){ //Case for queen
+				if(useQueen(playerTwoCurrentRow, playerTwoCurrentCol, playerTwoNewRow, playerTwoNewCol, -1) == 1){
+					;
+				} else {
+					printf("\n**That is an illegal move, please try again**\n");
+					goto playerTwo;
+				}
+			} else if(isKing(playerTwoCurrentRow, playerTwoCurrentCol)){ //Case for king
+				if(useKing(playerTwoCurrentRow, playerTwoCurrentCol, playerTwoNewRow, playerTwoNewCol, -1) == 1){
 					;
 				} else {
 					printf("\n**That is an illegal move, please try again**\n");
 					goto playerTwo;
 				}
 			}
-			playerTwoFirstTurnWasPlayed = 1;
+			else { //Anything else is an illegal move
+				printf("\n**That is an illegal move, please try again**\n");
+				goto playerTwo;
+			}
+			playerTwoFirstTurnWasPlayed = 1; //Makes sure that player two doesn't go two spaces ahead with pawn after first turn
 		} else if(command[0] == 's' && command[1] == 'h' && command[2] == 'o' && command[3] == 'w'){
 			printChessBoard();
 			goto playerTwo;
@@ -270,6 +285,7 @@ void userInteraction(){
 			goto playerTwo;
 		}
 	}
+	kingIsInCheck();
 	
 }
 
@@ -287,7 +303,7 @@ int isPawn(int row, char col){
 	return 0;
 }
 
-int usePawn(int row1, char col1, int row2, char col2){
+int usePawn(int row1, char col1, int row2, char col2, int playerSign){
 	int originalRow;
 	int originalCol;
 	int originalCoordinateValue;
@@ -307,6 +323,28 @@ int usePawn(int row1, char col1, int row2, char col2){
 	if(newRow > 7 || newRow < 0 || newColNum > 7 || newColNum < 0){
 		printf("\n**A value you entered was greater than 8, greater than h, less than 1, or less than a. Please try again\n\n");
 		return 0;
+	}
+
+	//Checking if a player is trying to play an opponent's piece
+	if(playerSign == 1 && originalCoordinateValue < 0){
+		return -1;
+	} else if(playerSign == -1 && originalCoordinateValue > 0){
+		return -1;
+	}
+
+	//Checking if player is trying to illegally move diagonally
+	if(playerSign == 1){
+		if((originalCol - newColNum == 1 && originalRow - newRow == 1) && newCoordinateValue == 0){
+			return -1;
+		} else if((newColNum - originalCol == 1 && originalRow - newRow == 1) && newCoordinateValue == 0){
+			return -1;
+		}
+	} else if(playerSign == -1){
+		if((originalCol - newColNum == 1 && newRow - originalRow == 1) && newCoordinateValue == 0){
+			return -1;
+		} else if((newColNum - originalCol == 1 && newRow - originalRow == 1) && newCoordinateValue == 0){
+			return -1;
+		}
 	}
 
 	//player one first turn
@@ -399,7 +437,7 @@ int isKnight(int row, char col){
 	return 0;
 }
 
-int useKnight(int row1, char col1, int row2, char col2){
+int useKnight(int row1, char col1, int row2, char col2, int playerSign){
 	int originalRow;
 	int originalCol;
 	int originalCoordinateValue;
@@ -421,6 +459,14 @@ int useKnight(int row1, char col1, int row2, char col2){
 		return -1;
 	}
 
+	//Checks if player is playing opponent's piece
+	if(playerSign == 1 && originalCoordinateValue < 0){
+		return -1;
+	} else if(playerSign == -1 && originalCoordinateValue > 0){
+		return -1;
+	}
+
+	//Cases where it works
 	if ((newRow == (originalRow - 2) && newColNum == (originalCol + 1)) ||
 	    (newRow == (originalRow - 2) && newColNum == (originalCol - 1)) ||
 	    (newRow == (originalRow + 2) && newColNum == (originalCol - 1)) ||
@@ -430,16 +476,17 @@ int useKnight(int row1, char col1, int row2, char col2){
 	    (newRow == (originalRow - 1) && newColNum == (originalCol + 2)) ||
 	    (newRow == (originalRow + 1) && newColNum == (originalCol + 2))){
 
+		//Case where it works
 		if (!((originalCoordinateValue > 0 && newCoordinateValue > 0) ||
 			(originalCoordinateValue < 0 && newCoordinateValue < 0))){
 			chessBoard[newRow][newColNum] = chessBoard[originalRow][originalCol];
 			chessBoard[originalRow][originalCol] = 0;
 			printChessBoard();
 			return 1;
-		} else {
+		} else { //Case that doesn't work
 			return -1;
 		}
-	} else {
+	} else { //Case that doesn't work
 		return -1;
 	}
 	return -1;
@@ -460,7 +507,7 @@ int isRook(int row, char col){
 	return 0;
 }
 
-int useRook(int row1, char col1, int row2, char col2){
+int useRook(int row1, char col1, int row2, char col2, int playerSign){
 	int originalRow; //real row number for index
 	int originalCol; //real row number for index
 	int originalCoordinateValue; //value at original coordinates
@@ -478,6 +525,13 @@ int useRook(int row1, char col1, int row2, char col2){
 
 	//Checking if user entered a value greater than or less than allowed
 	if(newRow > 7 || newRow < 0 || newColNum > 7 || newColNum < 0){
+		return -1;
+	}
+
+	//Checks if player is playing the opponent's piece
+	if(playerSign == 1 && originalCoordinateValue < 0){
+		return -1;
+	} else if(playerSign == -1 && originalCoordinateValue > 0){
 		return -1;
 	}
 
@@ -598,7 +652,7 @@ int isBishop(int row, char col){
 	return 0;
 }
 
-int useBishop(int row1, char col1, int row2, char col2){
+int useBishop(int row1, char col1, int row2, char col2, int playerSign){
 	int originalRow; //real row number for index
 	int originalCol; //real row number for index
 	int originalCoordinateValue; //value at original coordinates
@@ -617,6 +671,13 @@ int useBishop(int row1, char col1, int row2, char col2){
 	//Checking if user entered a value greater than or less than allowed
 	if(newRow > 7 || newRow < 0 || newColNum > 7 || newColNum < 0){
 		printf("\n**A value you entered was greater than 8, greater than h, less than 1, or less than a\n\n");
+		return -1;
+	}
+
+	//Checks if player is playing the opponent's piece
+	if(playerSign == 1 && originalCoordinateValue < 0){
+		return -1;
+	} else if(playerSign == -1 && originalCoordinateValue > 0){
 		return -1;
 	}
 
@@ -736,7 +797,7 @@ int isQueen(int row, char col){
 	return 0;
 }
 
-int useQueen(int row1, char col1, int row2, char col2){
+int useQueen(int row1, char col1, int row2, char col2, int playerSign){
 	int originalRow; //real row number for index
 	int originalCol; //real row number for index
 	int originalCoordinateValue; //value at original coordinates
@@ -758,15 +819,22 @@ int useQueen(int row1, char col1, int row2, char col2){
 		return -1;
 	}
 
+	//Checks if player is playing the opponent's piece
+	if(playerSign == 1 && originalCoordinateValue < 0){
+		return -1;
+	} else if(playerSign == -1 && originalCoordinateValue > 0){
+		return -1;
+	}
+
 	//Uses bishop function for diagnal movements
 	if((newRow != originalRow) && (newColNum != originalCol)){
-		if(useBishop(row1, col1, row2, col2) == 1){
+		if(useBishop(row1, col1, row2, col2, playerSign) == 1){
 			;
 		} else {
 			return -1;
 		}
 	} else if((newRow != originalRow) || (newColNum != originalCol)){ //Uses rook for vertical or horizontal movements
-		if(useRook(row1, col1, row2, col2) == 1){
+		if(useRook(row1, col1, row2, col2, playerSign) == 1){
 			;
 		} else {
 			return -1;
@@ -793,7 +861,7 @@ int isKing(int row, char col){
 	return 0;
 }
 
-int useKing(int row1, char col1, int row2, char col2){
+int useKing(int row1, char col1, int row2, char col2, int playerSign){
 	int originalRow; //real row number for index
 	int originalCol; //real row number for index
 	int originalCoordinateValue; //value at original coordinates
@@ -812,6 +880,13 @@ int useKing(int row1, char col1, int row2, char col2){
 	//Checking if user entered a value greater than or less than allowed
 	if(newRow > 7 || newRow < 0 || newColNum > 7 || newColNum < 0){
 		printf("\n**A value you entered was greater than 8, greater than h, less than 1, or less than a\n\n");
+		return -1;
+	}
+
+	//Checks if player is playing the opponent's piece
+	if(playerSign == 1 && originalCoordinateValue < 0){
+		return -1;
+	} else if(playerSign == -1 && originalCoordinateValue > 0){
 		return -1;
 	}
 
@@ -844,6 +919,49 @@ int useKing(int row1, char col1, int row2, char col2){
 	} 
 	return 0;
 }
+
+void kingIsInCheck(){
+	for(int i = 0; i < 8; i++){
+		for(int j = 0; j < 8; j++){
+			if(chessBoard[i][j] == 6){ //For player one's king
+				if(chessBoard[i][j - 1] < 0){ //to the left
+					printf("\n**Player One's King is in 'check'**\n\n");
+					return;
+				} else if(chessBoard[i][j + 1] < 0){ //to the right
+					printf("\n**Player One's King is in 'check'**\n\n");
+					return;
+				} else if(chessBoard[i - 1][j] < 0){ //to up
+					printf("\n**Player One's King is in 'check'**\n\n");
+					return;
+				} else if(chessBoard[i - 1][j-1] < 0){ //to upper left
+					printf("\n**Player One's King is in 'check'**\n\n");
+					return;
+				} else if(chessBoard[i - 1][j + 1] < 0){ //to upper right
+					printf("\n**Player One's King is in 'check'**\n\n");
+					return;
+				}
+			} else if(chessBoard[i][j] == -6){
+				if(chessBoard[i][j - 1] > 0){ //to the left
+					printf("\n**Player Two's King is in 'check'\n");
+					return;
+				} else if(chessBoard[i][j + 1] > 0){ //to the right
+					printf("\n**Player Two's King is in 'check'\n");
+					return;
+				} else if(chessBoard[i + 1][j] > 0){ //to up
+					printf("\n**Player Two's King is in 'check'\n");
+					return;
+				} else if (chessBoard[i + 1][j + 1] > 0){ //to lower right
+					printf("\n**Player Two's King is in 'check'\n");
+					return;
+				} else if(chessBoard[i + 1][j - 1] > 0){ //to lower left
+					printf("\n**Player Two's King is in 'check'\n");
+					return;
+				}
+			}
+		}
+	}
+}
+
 
 
 
